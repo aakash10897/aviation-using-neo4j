@@ -1,0 +1,97 @@
+
+
+														QUERRIES
+
+//Loading airports_cutdown.csv
+LOAD CSV WITH HEADERS FROM 'file:///airports_cutdown.csv' AS row 
+WITH toInteger(row.Airport_id) AS Airport_id, toString(row.Airport_name) AS Airport_name,toString(row.City) AS City,toString(row.Country) AS Country,toString(row.IATA) AS IATA,toString(row.ICAO) AS ICAO,toFloat(row.Latitude) AS Latitude,toFloat(row.Longitude) AS Longitude,toInteger(row.Altitude) AS Altitude,toInteger(row.TZ) AS TZ,toString(row.DST) AS DST,toString(row.TZ_timezone) AS TZ_timezone 
+MERGE (air : airports{Airport_id:Airport_id}) 
+	SET air.Airport_name=Airport_name,air.City=City,air.Country=Country,air.IATA=IATA,air.ICAO=ICAO,air.Latitude=Latitude,air.Longitude=Longitude,air.Altitude=Altitude,air.TZ=TZ,air.DST=DST,air.TZ_timezone=TZ_timezone 
+RETURN count(air)
+
+
+//Loading airlines_cutdown.csv
+LOAD CSV WITH HEADERS FROM 'file:///airlines_cutdown.csv' AS row 
+WITH toInteger(row.Airline_id) AS Airline_id, toString(row.Airline_name) AS Airline_name,toString(row.Alias) AS Alias,toString(row.IATA) AS IATA,toString(row.ICAO) AS ICAO,toString(row.Callsign) AS Callsign,toString(row.Country) AS Country,toString(row.Active) AS Active, 
+MERGE (al : airlines{Airline_id:Airline_id}) 
+	SET al.Airline_name=Airline_name,al.Alias=Alias,al.Country=Country,al.IATA=IATA,al.ICAO=ICAO,al.Callsign=Callsign,al.Active=Active
+RETURN count(al)
+
+
+
+//Loading routes_cutdown_key.csv to database
+LOAD CSV WITH HEADERS FROM 'file:///routes_cutodown_key.csv' AS row 
+WITH toInteger(row.Route_id) AS Route_id, toString(row.Airline) AS Airline,toInteger(row.Airline_id) AS Airline_id,toString(row.Source_airport) AS Source_airport,toInteger(row.Source_airport_id) AS Source_airport_id,toString(row.Destination_airport) AS Destination_airport,toInteger(row.Destination_airport_id) AS Destination_airport_id,toString(row.Codeshare) AS Codeshare,toInteger(row.Stops) AS Stops,toString(row.Equipment) AS Equipment 
+MERGE (r : routes{Route_id_id:Route_id}) 
+	SET r.Airline=Airline,r.Airline_id=Airline_id,r.Source_airport=Source_airport,r.Source_airport_id=Source_airport_id,r.Destination_airport=Destination_airport,r.Destination_airport_id=Destination_airport_id,r.Codeshare=Codeshare,r.Stops=Stops,r.Equipment=Equipment
+RETURN count(r)
+
+
+
+
+//Connecting route with airports (relaiton-type="FROM")
+MATCH (air:airports),(r:routes)
+	WHERE air.Airport_id=r.Source_airport_id
+CREATE (air)-[from:FROM] -> (r)
+RETURN air,r
+
+//Connecting route with airports (relation-type ="TO")
+MATCH (air:airports),(r:routes)
+	WHERE air.Airport_id=r.Destination_airport_id
+CREATE (r)-[to:TO] -> (air)
+RETURN air,r
+
+
+//Connecting route node with airlines (relations-type="OF")
+MATCH (al:airlines),(r:routes)
+	WHERE al.Airline_id=r.Airline_id
+CREATE (r)-[of:OF] -> (al)
+RETURN al,r
+
+
+//Connecting all airports node
+MATCH (air:airports),(r:routes),(a:airports)
+	WHERE air.Airport_id=r.Source_airport_id and a.Airport_id=r.Destination_airport_id
+CREATE (air)-[:CONNECTED] -> (a)
+RETURN air,a
+
+
+
+//Deleting a relationship
+MATCH (air:airports) - [r:CONNECTED] -> (a:airports) DELETE r
+
+//Question 1
+MATCH (air:airports) 
+RETURN count(air)
+
+
+//Question 2
+MATCH (r:routes) RETURN count(r)
+
+//Question 3
+CALL algo.degree.stream("airports","CONNECTED",{direction:"incoming"})
+YIELD nodeId , score
+RETURN algo.asNode(nodeId).Airport_name, score as NO_OF_OUTGOING_EDGES
+
+
+//Question 4
+CALL algo.degree.stream("airports","CONNECTED",{direction:"outgoing"})
+YIELD nodeId , score
+RETURN algo.asNode(nodeId).Airport_name, score as NO_OF_OUTGOING_EDGES
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
