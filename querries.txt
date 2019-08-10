@@ -71,13 +71,33 @@ MATCH (r:routes) RETURN count(r)
 //Question 3
 CALL algo.degree.stream("airports","CONNECTED",{direction:"incoming"})
 YIELD nodeId , score
-RETURN algo.asNode(nodeId).Airport_name, score as NO_OF_OUTGOING_EDGES
+RETURN algo.asNode(nodeId).Airport_name, score as NO_OF_INCOMING_EDGES 
+ORDER BY NO_OF_INCOMING_EDGES DESC
+LIMIT 1
 
 
 //Question 4
 CALL algo.degree.stream("airports","CONNECTED",{direction:"outgoing"})
 YIELD nodeId , score
 RETURN algo.asNode(nodeId).Airport_name, score as NO_OF_OUTGOING_EDGES
+ORDER BY NO_OF_INCOMING_EDGES DESC
+LIMIT 1
+
+
+
+//Question 6
+CALL algo.closeness.stream('airports','CONNECTED')
+YIELD nodeId, centrality
+RETURN algo.asNode(nodeId).Airport_name, centrality AS central
+ORDER BY central DESC
+LIMIT 1
+
+//Question 8 - On basis of Connections
+CALL algo.pageRank.stream('airports', 'CONNECTED', {iterations:5, dampingFactor:0.85})
+YIELD nodeId, score
+
+RETURN algo.asNode(nodeId).Airport_name AS page,score
+ORDER BY score DESC
 
 
 
