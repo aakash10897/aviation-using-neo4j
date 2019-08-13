@@ -100,6 +100,32 @@ RETURN algo.asNode(nodeId).Airport_name AS page,score
 ORDER BY score DESC
 
 
+Question 5//
+CALL algo.closeness.stream("airports","CONNECTED")
+YIELD nodeId, centrality
+RETURN algo.asNode(nodeId).Airport_name, centrality 
+ORDER BY centrality DESC
+LIMIT 1
+
+
+
+For Insights:
+
+//Identifying triangles
+CALL algo.triangle.stream('airports','CONNECTED')
+YIELD nodeA,nodeB,nodeC
+
+RETURN algo.asNode(nodeA).Airport_name AS nodeA, algo.asNode(nodeB).Airport_name AS nodeB, algo.asNode(nodeC).Airport_name
+AS nodeC
+
+//TRiangle count by airport name
+CALL algo.triangleCount.stream('airports', 'CONNECTED', {concurrency:4})
+YIELD nodeId, triangles, coefficient
+
+RETURN algo.asNode(nodeId).Airport_name AS name, triangles, coefficient
+ORDER BY coefficient DESC
+
+
 
 
 
