@@ -1,8 +1,8 @@
 
-
+Databases : DB1, DB2, DB3
 														QUERRIES
 
-//Loading airports_cutdown.csv
+//Loading airports_cutdown.csv (DB1,DB2,DB3)
 LOAD CSV WITH HEADERS FROM 'file:///airports_cutdown.csv' AS row 
 WITH toInteger(row.Airport_id) AS Airport_id, toString(row.Airport_name) AS Airport_name,toString(row.City) AS City,toString(row.Country) AS Country,toString(row.IATA) AS IATA,toString(row.ICAO) AS ICAO,toFloat(row.Latitude) AS Latitude,toFloat(row.Longitude) AS Longitude,toInteger(row.Altitude) AS Altitude,toInteger(row.TZ) AS TZ,toString(row.DST) AS DST,toString(row.TZ_timezone) AS TZ_timezone 
 MERGE (air : airports{Airport_id:Airport_id}) 
@@ -10,7 +10,7 @@ MERGE (air : airports{Airport_id:Airport_id})
 RETURN count(air)
 
 
-//Loading airlines_cutdown.csv
+//Loading airlines_cutdown.csv (DB1)
 LOAD CSV WITH HEADERS FROM 'file:///airlines_cutdown.csv' AS row 
 WITH toInteger(row.Airline_id) AS Airline_id, toString(row.Airline_name) AS Airline_name,toString(row.Alias) AS Alias,toString(row.IATA) AS IATA,toString(row.ICAO) AS ICAO,toString(row.Callsign) AS Callsign,toString(row.Country) AS Country,toString(row.Active) AS Active, 
 MERGE (al : airlines{Airline_id:Airline_id}) 
@@ -19,7 +19,7 @@ RETURN count(al)
 
 
 
-//Loading routes_cutdown_key.csv to database
+//Loading routes_cutdown_key.csv to database (DB1,DB2,DB3)
 LOAD CSV WITH HEADERS FROM 'file:///routes_cutodown_key.csv' AS row 
 WITH toInteger(row.Route_id) AS Route_id, toString(row.Airline) AS Airline,toInteger(row.Airline_id) AS Airline_id,toString(row.Source_airport) AS Source_airport,toInteger(row.Source_airport_id) AS Source_airport_id,toString(row.Destination_airport) AS Destination_airport,toInteger(row.Destination_airport_id) AS Destination_airport_id,toString(row.Codeshare) AS Codeshare,toInteger(row.Stops) AS Stops,toString(row.Equipment) AS Equipment 
 MERGE (r : routes{Route_id_id:Route_id}) 
@@ -29,46 +29,51 @@ RETURN count(r)
 
 
 
-//Connecting route with airports (relaiton-type="FROM")
+//Connecting route with airports (relaiton-type="FROM") (DB1)
 MATCH (air:airports),(r:routes)
 	WHERE air.Airport_id=r.Source_airport_id
 CREATE (air)-[from:FROM] -> (r)
 RETURN air,r
 
-//Connecting route with airports (relation-type ="TO")
+//Connecting route with airports (relation-type ="TO") (DB1)
 MATCH (air:airports),(r:routes)
 	WHERE air.Airport_id=r.Destination_airport_id
 CREATE (r)-[to:TO] -> (air)
 RETURN air,r
 
 
-//Connecting route node with airlines (relations-type="OF")
+//Connecting route node with airlines (relations-type="OF") (DB1)
 MATCH (al:airlines),(r:routes)
 	WHERE al.Airline_id=r.Airline_id
 CREATE (r)-[of:OF] -> (al)
 RETURN al,r
 
 
-//Connecting all airports node
+//Connecting all airports node (DB2)
 MATCH (air:airports),(r:routes),(a:airports)
 	WHERE air.Airport_id=r.Source_airport_id and a.Airport_id=r.Destination_airport_id
 CREATE (air)-[:CONNECTED] -> (a)
 RETURN air,a
 
+//Connecting all airports node (DB3)
+MATCH (air:airports),(r:routes),(a:airports)
+	WHERE air.Airport_id=r.Source_airport_id and a.Airport_id=r.Destination_airport_id
+CREATE (air)-[:CONNECTED{cost:0}] -> (a)
+RETURN air,a
 
 
 //Deleting a relationship
 MATCH (air:airports) - [r:CONNECTED] -> (a:airports) DELETE r
 
-//Question 1
+//Question 1 (DB1)
 MATCH (air:airports) 
 RETURN count(air)
 
 
-//Question 2
+//Question 2 (DB1)
 MATCH (r:routes) RETURN count(r)
 
-//Question 3
+//Question 3 (DB2)
 CALL algo.degree.stream("airports","CONNECTED",{direction:"incoming"})
 YIELD nodeId , score
 RETURN algo.asNode(nodeId).Airport_name, score as NO_OF_INCOMING_EDGES 
@@ -76,7 +81,7 @@ ORDER BY NO_OF_INCOMING_EDGES DESC
 LIMIT 1
 
 
-//Question 4
+//Question 4 (DB2)
 CALL algo.degree.stream("airports","CONNECTED",{direction:"outgoing"})
 YIELD nodeId , score
 RETURN algo.asNode(nodeId).Airport_name, score as NO_OF_OUTGOING_EDGES
@@ -85,14 +90,7 @@ LIMIT 1
 
 
 
-//Question 6
-CALL algo.closeness.stream('airports','CONNECTED')
-YIELD nodeId, centrality
-RETURN algo.asNode(nodeId).Airport_name, centrality AS central
-ORDER BY central DESC
-LIMIT 1
-
-//Question 8 - On basis of Connections
+//Question 8 - On basis of Connections (DB2)
 CALL algo.pageRank.stream('airports', 'CONNECTED', {iterations:5, dampingFactor:0.85})
 YIELD nodeId, score
 
@@ -100,25 +98,30 @@ RETURN algo.asNode(nodeId).Airport_name AS page,score
 ORDER BY score DESC
 
 
-Question 5//
+Question 5// (DB2)
 CALL algo.closeness.stream("airports","CONNECTED")
 YIELD nodeId, centrality
 RETURN algo.asNode(nodeId).Airport_name, centrality 
 ORDER BY centrality DESC
 LIMIT 1
 
-
+//Question 6 (DB3)
+CALL algo.betweenness.stream("airports","CONNECTED",{direction:"both"})
+YIELD nodeId, centrality
+RETURN algo.asNode(nodeId).Airport_name, centrality
+ORDER BY centrality DESC
+LIMIT 1
 
 For Insights:
 
-//Identifying triangles
+//Identifying triangles (DB2)
 CALL algo.triangle.stream('airports','CONNECTED')
 YIELD nodeA,nodeB,nodeC
 
 RETURN algo.asNode(nodeA).Airport_name AS nodeA, algo.asNode(nodeB).Airport_name AS nodeB, algo.asNode(nodeC).Airport_name
 AS nodeC
 
-//TRiangle count by airport name
+//TRiangle count by airport name (DB2)
 CALL algo.triangleCount.stream('airports', 'CONNECTED', {concurrency:4})
 YIELD nodeId, triangles, coefficient
 
