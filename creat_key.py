@@ -2,8 +2,8 @@ import csv
 import sys
 
 def createKey():
-	inputfile = 'data/routes_cutdown.csv'
-	outputfile = 'data/routes_cutodown_key.csv'
+	inputfile = 'data2/routes.csv'
+	outputfile = 'data2/routes_key.csv'
 	with open(inputfile,'r') as inut, open(outputfile,'w') as oput:
 		r = csv.reader(inut)
 		w = csv.writer(oput)

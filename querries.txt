@@ -3,16 +3,16 @@ Databases : DB1, DB2, DB3
 														QUERRIES
 
 //Loading airports_cutdown.csv (DB1,DB2,DB3)
-LOAD CSV WITH HEADERS FROM 'file:///airports_cutdown.csv' AS row 
-WITH toInteger(row.Airport_id) AS Airport_id, toString(row.Airport_name) AS Airport_name,toString(row.City) AS City,toString(row.Country) AS Country,toString(row.IATA) AS IATA,toString(row.ICAO) AS ICAO,toFloat(row.Latitude) AS Latitude,toFloat(row.Longitude) AS Longitude,toInteger(row.Altitude) AS Altitude,toInteger(row.TZ) AS TZ,toString(row.DST) AS DST,toString(row.TZ_timezone) AS TZ_timezone 
+LOAD CSV WITH HEADERS FROM 'file:///airports.csv' AS row 
+WITH toInteger(row.Airport_id) AS Airport_id, toString(row.Airport_name) AS Airport_name,toString(row.City) AS City,toString(row.Country) AS Country,toString(row.IATA) AS IATA,toString(row.ICAO) AS ICAO,toFloat(row.Latitude) AS Latitude,toFloat(row.Longitude) AS Longitude,toInteger(row.Altitude) AS Altitude,toInteger(row.TZ) AS TZ,toString(row.DST) AS DST,toString(row.TZ_timezone) AS TZ_timezone ,toString(row.Type) AS Type, toString(row.Source) AS Source
 MERGE (air : airports{Airport_id:Airport_id}) 
-	SET air.Airport_name=Airport_name,air.City=City,air.Country=Country,air.IATA=IATA,air.ICAO=ICAO,air.Latitude=Latitude,air.Longitude=Longitude,air.Altitude=Altitude,air.TZ=TZ,air.DST=DST,air.TZ_timezone=TZ_timezone 
+	SET air.Airport_name=Airport_name,air.City=City,air.Country=Country,air.IATA=IATA,air.ICAO=ICAO,air.Latitude=Latitude,air.Longitude=Longitude,air.Altitude=Altitude,air.TZ=TZ,air.DST=DST,air.TZ_timezone=TZ_timezone,air.Type=Type,air.Source=Source
 RETURN count(air)
 
 
 //Loading airlines_cutdown.csv (DB1)
-LOAD CSV WITH HEADERS FROM 'file:///airlines_cutdown.csv' AS row 
-WITH toInteger(row.Airline_id) AS Airline_id, toString(row.Airline_name) AS Airline_name,toString(row.Alias) AS Alias,toString(row.IATA) AS IATA,toString(row.ICAO) AS ICAO,toString(row.Callsign) AS Callsign,toString(row.Country) AS Country,toString(row.Active) AS Active, 
+LOAD CSV WITH HEADERS FROM 'file:///airlines.csv' AS row 
+WITH toInteger(row.Airline_id) AS Airline_id, toString(row.Airline_name) AS Airline_name,toString(row.Alias) AS Alias,toString(row.IATA) AS IATA,toString(row.ICAO) AS ICAO,toString(row.Callsign) AS Callsign,toString(row.Country) AS Country,toString(row.Active) AS Active
 MERGE (al : airlines{Airline_id:Airline_id}) 
 	SET al.Airline_name=Airline_name,al.Alias=Alias,al.Country=Country,al.IATA=IATA,al.ICAO=ICAO,al.Callsign=Callsign,al.Active=Active
 RETURN count(al)
