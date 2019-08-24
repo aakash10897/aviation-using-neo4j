@@ -133,6 +133,60 @@ ORDER BY coefficient DESC
 
 
 
+-------
+Insights 
+
+//airlines there from source to destination
+MATCH (routes)
+WHERE (routes.Source_airport= 'GLA') AND (routes.Destination_airport='LCY' )
+RETURN routes.Airline
+
+
+//count of airlines there from source to destination
+MATCH (routes)
+WHERE (routes.Source_airport= 'GLA') AND (routes.Destination_airport='LCY' )
+RETURN count(routes)
+
+//Airlines from source
+MATCH (routes)
+WHERE (routes.Source_airport= 'GLA') 
+RETURN routes.Airline
+
+//Airlines to destination
+MATCH (routes)
+WHERE(routes.Destination_airport='LCY' )
+RETURN routes.Airline
+
+//count of airlines there to destination
+MATCH (routes)
+WHERE(routes.Destination_airport='LCY' )
+RETURN count(routes)
+
+//count of airlines from source
+MATCH (routes)
+WHERE (routes.Source_airport= 'GLA') 
+RETURN count(routes)
+
+//randomwalk
+MATCH (startat:airports {Airport_id: 507})
+CALL algo.randomWalk.stream(id(startat), 3, 1)
+YIELD nodeIds
+UNWIND nodeIds AS nodeId
+RETURN algo.asNode(nodeId).Airport_id as Airport_id, algo.asNode(nodeId).Airport_name as Airport_name
+
+
+//spatial functions
+
+//distance between two airports
+MATCH (a1:airports)-[:CONNECTED]->(a2:airports)
+WITH point({ longitude: a1.Latitude, latitude:a1.Longitude}) AS a1Point, point({ longitude: 
+a2.Longitude, latitude: a2.Latitude }) AS a2Point
+RETURN round(distance(a1Point, a2Point)) AS travelDistance
+
+
+
+
+
 
 
 
